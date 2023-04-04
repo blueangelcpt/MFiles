@@ -24,7 +24,7 @@ class MfilesComponent extends Component {
 	private const MFILES_DATATYPE_MULTILINE_TEXT = 13;
 	private const MFILES_DATATYPE_ACL = 14;
 
-	public function initialize() {
+	public function initialize(Controller $controller, $settings = array()) {
 		$this->controller = $controller;
 		$this->settings = array_merge($this->settings, $settings);
 		$this->socket = new HttpSocket(array(
