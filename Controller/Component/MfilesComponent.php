@@ -3,6 +3,7 @@ App::uses('HttpSocket', 'Network/Http');
 class MfilesComponent extends Component {
 	private $socket = '';
 	private $tag = 'mfiles';
+	private $authToken = NULL;
 	public $settings = array(
 		'url' => 'https://mfiles.documentwarehouse.com.na/REST/',
 		'Username' => '',
@@ -34,17 +35,17 @@ class MfilesComponent extends Component {
 			'ssl_verify_depth' => 0,
 			'timeout' => 60
 		));
-		$this->_authenticate();
 	}
 
 	public function retrieveByIdNumber($id_number) {
+		$this->_authenticate();
 		$payload = json_encode();
 		$result = $this->socket->get(
 			$this->settings['url'] . 'objects/135/1/ObjectVersion?include=properties',
 			$payload,
 			array('header' => array(
 				'Content-Type' => 'application/json',
-				'X-Authentication' => $this->setttings['X-Authentication'],
+				'X-Authentication' => $this->authToken,
 			))
 		);
 		$this->log('Mfiles retrieve API request: ' . $this->socket->request['raw'], $this->tag);
@@ -54,13 +55,14 @@ class MfilesComponent extends Component {
 	}
 
 	public function retrieveByPassportNumber($id_number) {
+		$this->_authenticate();
 		$payload = json_encode();
 		$result = $this->socket->get(
 			$this->settings['url'] . 'objects/135/1/ObjectVersion?include=properties',
 			$payload,
 			array('header' => array(
 				'Content-Type' => 'application/json',
-				'X-Authentication' => $this->setttings['X-Authentication'],
+				'X-Authentication' => $this->authToken,
 			))
 		);
 		$this->log('Mfiles retrieve API request: ' . $this->socket->request['raw'], $this->tag);
@@ -70,6 +72,7 @@ class MfilesComponent extends Component {
 	}
 
 	public function saveToVault($driblets) {
+		$this->_authenticate();
 		$transformed_data = array('PropertyValues' => array());
 		foreach ($driblets as $label => $value) {
 			$transformed_data['PropertyValues'][] = $this->_transformToMFiles($label, $value);
@@ -84,13 +87,15 @@ class MfilesComponent extends Component {
 				);
 			}
 		}
+		pr($transformed_data);
+		die();
 		$payload = json_encode($transformed_data);
 		$result = $this->socket->post(
 			$this->settings['url'] . 'objects/101',
 			$payload,
 			array('header' => array(
 				'Content-Type' => 'application/json',
-				'X-Authentication' => $this->setttings['X-Authentication'],
+				'X-Authentication' => $this->authToken,
 			))
 		);
 		$this->log('Mfiles upload API request: ' . $this->socket->request['raw'], $this->tag);
@@ -115,7 +120,7 @@ class MfilesComponent extends Component {
 		$this->log('Mfiles authenticate API request: ' . $this->socket->request['raw'], $this->tag);
 		$this->log('Mfiles authenticate API response: ' . $result, $this->tag);
 		$result = json_decode($result->body, true);
-		$this->setttings['X-Authentication'] = $result['Value'];
+		$this->authToken = $result['Value'];
 	}
 
 	private function _getDocumentTypeByLabel($label) {
@@ -554,7 +559,7 @@ class MfilesComponent extends Component {
 			$payload,
 			array('header' => array(
 				'Content-Type' => 'application/octet-stream',
-				'X-Authentication' => $this->setttings['X-Authentication'],
+				'X-Authentication' => $this->authToken,
 			))
 		);
 		$result = json_decode($result->body, true);
@@ -569,21 +574,3 @@ class MfilesComponent extends Component {
 		return $structure;
 	}
 }
-
-/*
-case 'match':
-	$result = 1040;
-	break;
-case 'match_confidence':
-	$result = 1040;
-	break;
-case 'kairos_liveness_selfie':
-	$result = 1040;
-	break;
-case 'id_liveness':
-	$result = 1040;
-	break;
-case 'face_confidence':
-	$result = 1040;
-	break;
-*/
